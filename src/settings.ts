@@ -1,5 +1,5 @@
 import type { App } from 'obsidian';
-import { PluginSettingTab, Setting } from 'obsidian';
+import { normalizePath, PluginSettingTab, Setting } from 'obsidian';
 import type InstaformatSyncPlugin from './main.js';
 
 export interface InstaformatSyncSettings {
@@ -35,7 +35,6 @@ export class InstaformatSyncSettingTab extends PluginSettingTab {
   display(): void {
     const { containerEl } = this;
     containerEl.empty();
-    containerEl.createEl('h2', { text: 'Instaformat Sync' });
 
     new Setting(containerEl)
       .setName('Server URL')
@@ -78,7 +77,7 @@ export class InstaformatSyncSettingTab extends PluginSettingTab {
       .setDesc('Local folder where synced Markdown files are stored.')
       .addText((text) =>
         text.setValue(this.plugin.settings.vaultRoot).onChange(async (value) => {
-          this.plugin.settings.vaultRoot = value.trim() || 'Instaformat';
+          this.plugin.settings.vaultRoot = normalizePath(value.trim() || 'Instaformat');
           await this.plugin.saveSettings();
         }),
       );

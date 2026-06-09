@@ -75,7 +75,7 @@ class ObsidianVaultFS implements VaultFS {
 
   async write(path: string, text: string): Promise<void> {
     const file = this.plugin.app.vault.getAbstractFileByPath(path);
-    if (file instanceof TFile) await this.plugin.app.vault.modify(file, text);
+    if (file instanceof TFile) await this.plugin.app.vault.process(file, () => text);
     else await this.plugin.app.vault.create(path, text);
   }
 
@@ -87,7 +87,7 @@ class ObsidianVaultFS implements VaultFS {
 
   async delete(path: string): Promise<void> {
     const file = this.plugin.app.vault.getAbstractFileByPath(path);
-    if (file) await this.plugin.app.vault.delete(file);
+    if (file instanceof TFile) await this.plugin.app.fileManager.trashFile(file);
   }
 
   async exists(path: string): Promise<boolean> {
