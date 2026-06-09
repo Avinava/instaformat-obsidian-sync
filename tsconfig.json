@@ -1,0 +1,33 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "noEmit": true,
+    "declaration": false,
+    "declarationMap": false,
+    "composite": false,
+    "lib": [
+      "ES2022",
+      "DOM"
+    ],
+    "types": [
+      "obsidian"
+    ],
+    "baseUrl": ".",
+    "paths": {
+      "@instaformat/sync-core": [
+        "./packages/sync-core/src/index.ts"
+      ]
+    }
+  },
+  "include": [
+    "src/**/*.ts"
+  ],
+  "references": [
+    {
+      "path": "./packages/sync-core"
+    }
+  ]
+}
