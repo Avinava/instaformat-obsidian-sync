@@ -7,7 +7,10 @@ export class InstaformatRemoteApi implements RemoteApi {
     private readonly token: string,
   ) {}
 
-  private async request<T>(path: string, options: { method?: string; body?: unknown; headers?: Record<string, string> } = {}): Promise<T> {
+  private async request<T>(
+    path: string,
+    options: { method?: string; body?: unknown; headers?: Record<string, string> } = {},
+  ): Promise<T> {
     const response = await requestUrl({
       url: `${this.serverUrl.replace(/\/$/, '')}${path}`,
       method: options.method ?? 'GET',
@@ -42,14 +45,13 @@ export class InstaformatRemoteApi implements RemoteApi {
   }
 
   patchDocument(id: string, content: string, revision: number) {
-    return this.request<ReturnType<RemoteApi['patchDocument']> extends Promise<infer T> ? T : never>(
-      `/api/documents/${id}`,
-      {
-        method: 'PATCH',
-        headers: { 'If-Match': `"${revision}"` },
-        body: { content },
-      },
-    );
+    return this.request<
+      ReturnType<RemoteApi['patchDocument']> extends Promise<infer T> ? T : never
+    >(`/api/documents/${id}`, {
+      method: 'PATCH',
+      headers: { 'If-Match': `"${revision}"` },
+      body: { content },
+    });
   }
 
   applyText(id: string, content: string, baseHash: string) {

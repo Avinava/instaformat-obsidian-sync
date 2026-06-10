@@ -1,7 +1,18 @@
-import { runSyncCycle, type Clock, type Hasher, type StateStore, type SyncStateIndex, type VaultFS } from '@instaformat/sync-core';
-import { Notice, Plugin, TFile } from 'obsidian';
+import {
+  runSyncCycle,
+  type Clock,
+  type Hasher,
+  type StateStore,
+  type SyncStateIndex,
+  type VaultFS,
+} from '@instaformat/sync-core';
+import { Notice, Plugin, TFile, TFolder } from 'obsidian';
 import { InstaformatRemoteApi } from './adapters/remote-api.js';
-import { DEFAULT_SETTINGS, InstaformatSyncSettingTab, type InstaformatSyncSettings } from './settings.js';
+import {
+  DEFAULT_SETTINGS,
+  InstaformatSyncSettingTab,
+  type InstaformatSyncSettings,
+} from './settings.js';
 
 class ObsidianClock implements Clock {
   now(): Date {
@@ -23,7 +34,9 @@ class PluginStateStore implements StateStore {
   constructor(private readonly plugin: Plugin) {}
 
   async loadIndex(): Promise<SyncStateIndex | null> {
-    return ((await this.plugin.loadData()) as { syncState?: SyncStateIndex } | null)?.syncState ?? null;
+    return (
+      ((await this.plugin.loadData()) as { syncState?: SyncStateIndex } | null)?.syncState ?? null
+    );
   }
 
   async saveIndex(index: SyncStateIndex): Promise<void> {
@@ -32,7 +45,10 @@ class PluginStateStore implements StateStore {
   }
 
   async readBase(docId: string): Promise<string | null> {
-    return ((await this.plugin.loadData()) as { syncBases?: Record<string, string> } | null)?.syncBases?.[docId] ?? null;
+    return (
+      ((await this.plugin.loadData()) as { syncBases?: Record<string, string> } | null)
+        ?.syncBases?.[docId] ?? null
+    );
   }
 
   async writeBase(docId: string, text: string): Promise<void> {
@@ -54,9 +70,10 @@ class ObsidianVaultFS implements VaultFS {
   constructor(private readonly plugin: Plugin) {}
 
   async listMarkdownFiles(root: string) {
-    const files = this.plugin.app.vault
-      .getMarkdownFiles()
-      .filter((file) => file.path === root || file.path.startsWith(`${root}/`));
+    const rootFolder = this.resolveRootFolder(root);
+    if (!rootFolder) return [];
+
+    const files = this.collectMarkdownFiles(rootFolder);
     return Promise.all(
       files.map(async (file) => ({
         path: file.path,
@@ -75,7 +92,7 @@ class ObsidianVaultFS implements VaultFS {
 
   async write(path: string, text: string): Promise<void> {
     const file = this.plugin.app.vault.getAbstractFileByPath(path);
-    if (file instanceof TFile) await this.plugin.app.vault.process(file, () => text);
+    if (file instanceof TFile) await this.plugin.app.vault.modify(file, text);
     else await this.plugin.app.vault.create(path, text);
   }
 
@@ -87,11 +104,26 @@ class ObsidianVaultFS implements VaultFS {
 
   async delete(path: string): Promise<void> {
     const file = this.plugin.app.vault.getAbstractFileByPath(path);
-    if (file instanceof TFile) await this.plugin.app.fileManager.trashFile(file);
+    if (file instanceof TFile) await this.plugin.app.vault.delete(file);
   }
 
   async exists(path: string): Promise<boolean> {
     return this.plugin.app.vault.getAbstractFileByPath(path) !== null;
+  }
+
+  private resolveRootFolder(root: string): TFolder | null {
+    if (!root) return this.plugin.app.vault.getRoot();
+    const file = this.plugin.app.vault.getAbstractFileByPath(root);
+    return file instanceof TFolder ? file : null;
+  }
+
+  private collectMarkdownFiles(folder: TFolder): TFile[] {
+    const files: TFile[] = [];
+    for (const child of folder.children) {
+      if (child instanceof TFolder) files.push(...this.collectMarkdownFiles(child));
+      else if (child instanceof TFile && child.extension === 'md') files.push(child);
+    }
+    return files;
   }
 }
 
@@ -130,18 +162,19 @@ export default class InstaformatSyncPlugin extends Plugin {
   configureScheduler(): void {
     if (this.settings.intervalMinutes <= 0) return;
     this.registerInterval(
-      window.setInterval(
-        () => {
-          void this.syncNow();
-        },
-        this.settings.intervalMinutes * 60_000,
-      ),
+      window.setInterval(() => {
+        void this.syncNow();
+      }, this.settings.intervalMinutes * 60_000),
     );
   }
 
   async testConnection(): Promise<void> {
     try {
-      await this.remote().getChanges({ folderId: this.settings.rootFolderId, since: null, limit: 1 });
+      await this.remote().getChanges({
+        folderId: this.settings.rootFolderId,
+        since: null,
+        limit: 1,
+      });
       new Notice('Instaformat connection verified');
     } catch (error) {
       new Notice(error instanceof Error ? error.message : 'Instaformat connection failed');
@@ -184,7 +217,14 @@ export default class InstaformatSyncPlugin extends Plugin {
 
   private setStatus(status: 'ok' | 'syncing' | 'warning' | 'paused'): void {
     if (!this.statusEl) return;
-    const label = status === 'ok' ? 'Instaformat' : status === 'syncing' ? 'Instaformat syncing' : status === 'warning' ? 'Instaformat warning' : 'Instaformat paused';
+    const label =
+      status === 'ok'
+        ? 'Instaformat'
+        : status === 'syncing'
+          ? 'Instaformat syncing'
+          : status === 'warning'
+            ? 'Instaformat warning'
+            : 'Instaformat paused';
     this.statusEl.setText(label);
   }
 }

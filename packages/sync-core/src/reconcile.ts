@@ -36,9 +36,15 @@ export function reconcile(input: ReconcileInput): ReconcileDecision {
 
   if (input.remote === 'deleted' || input.remote === 'trashed') {
     if (input.local === 'modified') {
-      return { action: 'untrack', reason: 'Remote deleted but local has edits; keep local ignored.' };
+      return {
+        action: 'untrack',
+        reason: 'Remote deleted but local has edits; keep local ignored.',
+      };
     }
-    return { action: input.local === 'deleted' ? 'untrack' : 'delete-local', reason: 'Remote deletion wins.' };
+    return {
+      action: input.local === 'deleted' ? 'untrack' : 'delete-local',
+      reason: 'Remote deletion wins.',
+    };
   }
 
   if (input.local === 'new') {
@@ -49,7 +55,11 @@ export function reconcile(input: ReconcileInput): ReconcileDecision {
 
   if (input.local === 'deleted') {
     return canWrite
-      ? { action: 'trash-remote', reason: 'Local delete maps to remote trash.', requiresConfirmation: true }
+      ? {
+          action: 'trash-remote',
+          reason: 'Local delete maps to remote trash.',
+          requiresConfirmation: true,
+        }
       : { action: 'redownload', reason: 'Viewer cannot delete remote document.' };
   }
 

@@ -88,7 +88,8 @@ export class InstaformatSyncSettingTab extends PluginSettingTab {
       .addText((text) =>
         text.setValue(String(this.plugin.settings.intervalMinutes)).onChange(async (value) => {
           const parsed = Number(value);
-          this.plugin.settings.intervalMinutes = Number.isFinite(parsed) && parsed >= 0 ? parsed : 5;
+          this.plugin.settings.intervalMinutes =
+            Number.isFinite(parsed) && parsed >= 0 ? parsed : 5;
           await this.plugin.saveSettings();
           this.plugin.configureScheduler();
         }),

@@ -3,7 +3,7 @@
   "name": "Instaformat Sync",
   "version": "0.1.0",
   "minAppVersion": "1.5.0",
-  "description": "Sync Markdown notes between Obsidian and Instaformat Studio.",
+  "description": "Sync Markdown notes between your vault and Instaformat Studio.",
   "author": "Instaformat",
   "authorUrl": "https://instaformat.com",
   "isDesktopOnly": false

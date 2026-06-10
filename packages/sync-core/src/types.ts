@@ -1,4 +1,10 @@
-export type RemoteChangeKind = 'unchanged' | 'modified' | 'trashed' | 'deleted' | 'access-revoked' | 'renamed';
+export type RemoteChangeKind =
+  | 'unchanged'
+  | 'modified'
+  | 'trashed'
+  | 'deleted'
+  | 'access-revoked'
+  | 'renamed';
 export type LocalChangeKind = 'unchanged' | 'modified' | 'deleted' | 'new';
 export type AccessRole = 'OWNER' | 'EDITOR' | 'VIEWER';
 
@@ -42,8 +48,16 @@ export interface RemoteApi {
     folders: Array<{ id: string; name?: string; parentId?: string | null; change: string }>;
   }>;
   getDocument(id: string): Promise<RemoteDocument & { content: string }>;
-  patchDocument(id: string, content: string, revision: number): Promise<{ revision: number; contentHash: string }>;
-  applyText(id: string, content: string, baseHash: string): Promise<{ revision: number; contentHash: string }>;
+  patchDocument(
+    id: string,
+    content: string,
+    revision: number,
+  ): Promise<{ revision: number; contentHash: string }>;
+  applyText(
+    id: string,
+    content: string,
+    baseHash: string,
+  ): Promise<{ revision: number; contentHash: string }>;
 }
 
 export interface VaultFile {

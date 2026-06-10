@@ -1,5 +1,28 @@
-const FORBIDDEN_CHARS = /[\/\\:*?"<>|#^[\]\u0000-\u001f]/g;
+const FORBIDDEN_FILENAME_CHARS = new Set([
+  '/',
+  '\\',
+  ':',
+  '*',
+  '?',
+  '"',
+  '<',
+  '>',
+  '|',
+  '#',
+  '^',
+  '[',
+  ']',
+]);
 const RESERVED_WINDOWS_NAMES = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i;
+
+function replaceForbiddenFilenameChars(input: string): string {
+  let output = '';
+  for (const char of input) {
+    const code = char.codePointAt(0) ?? 0;
+    output += code <= 0x1f || FORBIDDEN_FILENAME_CHARS.has(char) ? '-' : char;
+  }
+  return output;
+}
 
 function truncateUtf8(input: string, maxBytes: number): string {
   let output = input;
@@ -22,9 +45,7 @@ function utf8ByteLength(input: string): number {
 }
 
 export function sanitizeBasename(title: string): string {
-  const normalized = title
-    .normalize('NFC')
-    .replace(FORBIDDEN_CHARS, '-')
+  const normalized = replaceForbiddenFilenameChars(title.normalize('NFC'))
     .replace(/\s+/g, ' ')
     .trim()
     .replace(/[. ]+$/g, '');
@@ -33,7 +54,11 @@ export function sanitizeBasename(title: string): string {
   return truncateUtf8(safe, 180);
 }
 
-export function uniqueMarkdownPath(title: string, folderPath: string, existingPaths: Set<string>): string {
+export function uniqueMarkdownPath(
+  title: string,
+  folderPath: string,
+  existingPaths: Set<string>,
+): string {
   const base = sanitizeBasename(title);
   let suffix = 0;
   while (true) {
